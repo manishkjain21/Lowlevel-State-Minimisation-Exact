@@ -31,7 +31,9 @@ public class Main {
 
             Parser p = new Parser();
             p.parseFile(input_file_name);
-
+            
+            //Remove the extension from file name
+            input_file_name = input_file_name.substring(0, input_file_name.indexOf("."));
             // Representation of the FSM
             ParsedFile fsm = p.getParsedFile();
             // TODO - here you go 
@@ -235,7 +237,7 @@ public class Main {
                 s = st[loop_var].getcount();
                 x += s;
             }
-            System.out.println("The Moore Machine is as below: ");
+            System.out.println("The Normal Moore Machine is as below: ");
             for (s = 0; s < total_len; s++) {
                 System.out.format("%d ", Tinput_data[s]);
                 System.out.print(TcurrentStates[s] + " ");
@@ -348,14 +350,24 @@ public class Main {
                 System.out.print(next_col.get(s) + " ");
                 System.out.format("%d\n", output_col.get(s));
             }
-            System.out.format("%d ", total_len);
-
+            System.out.format("Minimised Transitions = %d \n", total_len);
+            System.out.format("Minimised States = %d ", k);
             BufferedWriter bw;
-            String filename = "Minimised_FSM.blif";
+            String filename = "Minimised_FSM"+input_file_name+".blif";
 
             try {
                 bw = new BufferedWriter(new FileWriter(filename));
                 bw.write(".model fsm\n");
+                bw.write(".inputs ");
+                for (s=init_input ; s > 0; s--){
+                bw.write("I"+s+" ");
+                }
+                bw.write("\n");
+                bw.write(".outputs ");
+                for (s=init_outputs ; s > 0; s--){
+                bw.write("O"+s+" ");
+                }
+                bw.write("\n");
                 bw.write(".start_kiss\n");
                 bw.write(".i " + init_input + "\n");
                 bw.write(".o " + init_outputs + "\n");
@@ -369,6 +381,7 @@ public class Main {
                     bw.write(changetostring(output_col.get(s), init_outputs) + "\n");
                 }
                 bw.write(".end_kiss");
+                bw.write(".end");
                 bw.flush();
                 bw.close();
             } catch (IOException e) {
