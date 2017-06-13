@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+
+
 //import moore_machine.java;
 /**
  * Main class
@@ -25,13 +27,15 @@ public class Main {
     public static void main(String[] args) {
 
         if (args.length > 0) {
+            long startTime = System.currentTimeMillis();
+            
             System.out.println(" Current working directory : " + System.getProperty("user.dir"));
-
+            
             String input_file_name = args[0];
 
             Parser p = new Parser();
             p.parseFile(input_file_name);
-            
+
             //Remove the extension from file name
             input_file_name = input_file_name.substring(0, input_file_name.indexOf("."));
             // Representation of the FSM
@@ -248,7 +252,7 @@ public class Main {
             System.out.format("New States= %d\n", x);
             System.out.format("StateCounter= %d\n", state_counter);
             System.out.format("Variable Count= %d \n", var_count);
-            System.out.format("%d ", total_len);
+            System.out.format("New Transitions= %d \n", total_len);
             List<Long> input_col = new ArrayList<Long>();
             List<String> current_col = new ArrayList<String>();
             List<String> next_col = new ArrayList<String>();
@@ -260,60 +264,19 @@ public class Main {
                 next_col.add(TNextStates[s]);
                 output_col.add(Toutputs[s]);
             }
-            // Remove the redundant states from the state transition table
-            for (s = 0; s < total_len; s++) {
-                for (j = s; j < total_len; j++) {
-                    if (s != j) {
-                        if ((input_col.get(s) == input_col.get(j)) && current_col.get(s).equals(current_col.get(j)) && next_col.get(s).equals(next_col.get(j))) {
-                            //remove the state from list and decrement total length
-                            input_col.remove(j);
-                            current_col.remove(j);
-                            next_col.remove(j);
-                            output_col.remove(j);
-                            total_len--;
-                        }
-                    }
-                }
-            }
+
             // Code Works properly upto this point
-            //Check for same current state and next state in the transition table
-
-            long resultant_val;
+            //put a loop herefor continuous checking
             for (s = 0; s < total_len; s++) {
-                for (j = s; j < total_len; j++) {
-                    if (s != j) {
-                        if (current_col.get(s).equals(current_col.get(j)) && next_col.get(s).equals(next_col.get(j))) {
-                            resultant_val = compare_inputs(input_col.get(s), input_col.get(j));
-
-                            if (resultant_val != 0) {
-                                input_col.set(s, resultant_val);
-                                input_col.remove(j);
-                                current_col.remove(j);
-                                next_col.remove(j);
-                                output_col.remove(j);
-                                total_len--;
-
-                            }
-                        }
-                    }
-                }
+                // check for redundancy
+                total_len = redundant_transitions(input_col, current_col, next_col, output_col, total_len);
+                //combine inputs
+                total_len = combineinputs(input_col, current_col, next_col, output_col, total_len);
+                //Combine states
+                total_len = combinestates(input_col, current_col, next_col, output_col, total_len, s);
             }
 
-            for (s = 0; s < total_len; s++) {
-                for (j = s; j < total_len; j++) {
-                    if (s != j) {
-                        if ((input_col.get(s) == input_col.get(j)) && (next_col.get(s).equals(next_col.get(j)))) {
-                            //Comma was removed from here
-                            current_col.set(s, current_col.get(s) + current_col.get(j));
-                            input_col.remove(j);
-                            current_col.remove(j);
-                            next_col.remove(j);
-                            output_col.remove(j);
-                            total_len--;
-                        }
-                    }
-                }
-            }
+            //The below code checks for number of final states to count
             List<String> new_statenames = new ArrayList<String>();
             k = 0;
             int new_flag = 0;
@@ -352,20 +315,23 @@ public class Main {
             }
             System.out.format("Minimised Transitions = %d \n", total_len);
             System.out.format("Minimised States = %d ", k);
+            long endTime = System.currentTimeMillis();
+            
+            System.out.println("Execution Time is " + (endTime - startTime) + " milliseconds");
             BufferedWriter bw;
-            String filename = "Minimised_FSM"+input_file_name+".blif";
+            String filename = "Minimised_FSM" + input_file_name + ".blif";
 
             try {
                 bw = new BufferedWriter(new FileWriter(filename));
                 bw.write(".model fsm\n");
                 bw.write(".inputs ");
-                for (s=init_input ; s > 0; s--){
-                bw.write("I"+s+" ");
+                for (s = init_input; s > 0; s--) {
+                    bw.write("I" + s + " ");
                 }
                 bw.write("\n");
                 bw.write(".outputs ");
-                for (s=init_outputs ; s > 0; s--){
-                bw.write("O"+s+" ");
+                for (s = init_outputs; s > 0; s--) {
+                    bw.write("O" + s + " ");
                 }
                 bw.write("\n");
                 bw.write(".start_kiss\n");
@@ -380,7 +346,7 @@ public class Main {
                     bw.write(next_col.get(s) + " ");
                     bw.write(changetostring(output_col.get(s), init_outputs) + "\n");
                 }
-                bw.write(".end_kiss");
+                bw.write(".end_kiss\n");
                 bw.write(".end");
                 bw.flush();
                 bw.close();
@@ -402,7 +368,7 @@ public class Main {
             } catch (IOException e) {
                 System.out.println("An IOException occured");
             }
-
+            
         } else {
             System.out.println("No input argument given");
         }
@@ -494,7 +460,7 @@ public class Main {
                 case 2:
                     temp_res = 1;
                     break;
-                    
+
                 case 3:
                     temp_res = 3;
                     count_flag++;
@@ -537,6 +503,94 @@ public class Main {
 
         return m;
     }
+
+    public static int combinestates(List<Long> input, List<String> current_state, List<String> next_state, List<Long> output, int length, int s) {
+        int i, j;
+
+        for (j = s; j < length; j++) {
+            if (s != j) {
+                if ((input.get(s) == input.get(j)) && (next_state.get(s).equals(next_state.get(j))) && (output.get(s) == output.get(j))) {
+                    //Comma was removed from here
+                    if (current_state.get(s).equals(current_state.get(j))) {
+                        
+                    } else {
+
+                        current_state.set(s, current_state.get(s) + "," + current_state.get(j));
+                        input.remove(j);
+                        current_state.remove(j);
+                        next_state.remove(j);
+                        output.remove(j);
+                        length--;
+
+                        for (i = 0; i < length; i++) {
+                            if ((current_state.get(s).contains(current_state.get(i))) && s != i) {
+                                current_state.set(i, current_state.get(s));
+                            }
+                            if (current_state.get(s).contains(next_state.get(i))) {
+                                next_state.set(i, current_state.get(s));
+                            }
+
+                        }
+                        break;
+
+                    }
+                }
+            }
+        }
+
+        return length;
+
+    }
+
+    //Check for same current state and next state in the transition table
+    public static int combineinputs(List<Long> input, List<String> current_state, List<String> next_state, List<Long> output, int length) {
+        long resultant_val;
+        int s, j;
+        for (s = 0; s < length; s++) {
+            for (j = s; j < length; j++) {
+                if (s != j) {
+                    if (current_state.get(s).equals(current_state.get(j)) && next_state.get(s).equals(next_state.get(j)) && (output.get(s) == output.get(j))) {
+                        resultant_val = compare_inputs(input.get(s), input.get(j));
+
+                        if (resultant_val != 0) {
+                            input.set(s, resultant_val);
+                            input.remove(j);
+                            current_state.remove(j);
+                            next_state.remove(j);
+                            output.remove(j);
+                            length--;
+
+                        }
+                    }
+                }
+            }
+        }
+
+        return length;
+    }
+
+    public static int redundant_transitions(List<Long> input, List<String> current_state, List<String> next_state, List<Long> output, int length) {
+        int s, j;
+        for (s = 0; s < length; s++) {
+            for (j = s; j < length; j++) {
+                if (s != j) {
+                    if ((input.get(s) == input.get(j)) && current_state.get(s).equals(current_state.get(j)) && next_state.get(s).equals(next_state.get(j)) && (output.get(s) == output.get(j))) {
+                        //remove the state from list and decrement total length
+                        input.remove(j);
+                        current_state.remove(j);
+                        next_state.remove(j);
+                        output.remove(j);
+                        length--;
+                    }
+                }
+            }
+        }
+        return length;
+
+    }
+    
+    public static int
+    
 
 }
 
