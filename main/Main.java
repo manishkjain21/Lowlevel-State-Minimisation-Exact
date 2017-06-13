@@ -211,7 +211,7 @@ public class Main {
                                 TNextStates[t] = NextStates[s];
                                 TcurrentStates[t] = st[loop_var].new_state[i];
                                 Tinput_data[t] = input_data[s];
-                                Toutputs[t] = outputs[s];
+                                Toutputs[t] = st[loop_var].output[i];
                                 t++;
                             }
                         } else {
@@ -227,7 +227,7 @@ public class Main {
                             TNextStates[t] = NextStates[s];
                             TcurrentStates[t] = currentStates[s];
                             Tinput_data[t] = input_data[s];
-                            Toutputs[t] = outputs[s];
+                            Toutputs[t] = st[loop_var].output[0];
                             t++;
                         } else {
                             break;
@@ -250,8 +250,8 @@ public class Main {
             }
             System.out.format("Original Transitions= %d \n", total_len - var_count);
             System.out.format("New States= %d\n", x);
-            System.out.format("StateCounter= %d\n", state_counter);
-            System.out.format("Variable Count= %d \n", var_count);
+            System.out.format("Original States= %d\n", state_counter);
+            System.out.format("Transitions Added= %d \n", var_count);
             System.out.format("New Transitions= %d \n", total_len);
             List<Long> input_col = new ArrayList<Long>();
             List<String> current_col = new ArrayList<String>();
@@ -266,6 +266,7 @@ public class Main {
             }
 
             // Code Works properly upto this point
+            // Code for Minimisation using Equivalence Logic
             //put a loop herefor continuous checking
             for (s = 0; s < total_len; s++) {
                 // check for redundancy
@@ -589,7 +590,7 @@ public class Main {
 
     }
     
-    public static int
+    //public static int
     
 
 }
