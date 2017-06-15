@@ -13,8 +13,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-
-
 //import moore_machine.java;
 /**
  * Main class
@@ -28,9 +26,9 @@ public class Main {
 
         if (args.length > 0) {
             long startTime = System.currentTimeMillis();
-            
+
             System.out.println(" Current working directory : " + System.getProperty("user.dir"));
-            
+
             String input_file_name = args[0];
 
             Parser p = new Parser();
@@ -40,6 +38,7 @@ public class Main {
             input_file_name = input_file_name.substring(0, input_file_name.indexOf("."));
             // Representation of the FSM
             ParsedFile fsm = p.getParsedFile();
+                                 
             // TODO - here you go 
             State[] state_in = fsm.getStates();
 
@@ -56,25 +55,25 @@ public class Main {
             }
             System.out.format("I=%d S=%d T=%d O=%d\n", init_input, init_states, init_transitions, init_outputs);
             //Formatting the given states as a Table below
-
-            for (State s : state_in) {
-                //System.out.print(s.getName()+" ");
-                List<Long> x = s.getInputs();
-                int len = x.size();
-                for (int j = 0; j < len; j++) {
-                    long input = x.get(j);
-                    System.out.format("%d ", input);
-                    System.out.print(s.getName() + " ");
-                    State intermediate = s.getNextState(input);
-                    System.out.print(intermediate.getName());
-                    System.out.print(" ");
-                    System.out.print(s.output(input));
-                    System.out.println(" ");
-                }
-
-                System.out.println(" ");
-
-            }
+//
+//            for (State s : state_in) {
+//                //System.out.print(s.getName()+" ");
+//                List<Long> x = s.getInputs();
+//                int len = x.size();
+//                for (int j = 0; j < len; j++) {
+//                    long input = x.get(j);
+//                    System.out.format("%d ", input);
+//                    System.out.print(s.getName() + " ");
+//                    State intermediate = s.getNextState(input);
+//                    System.out.print(intermediate.getName());
+//                    System.out.print(" ");
+//                    System.out.print(s.output(input));
+//                    System.out.println(" ");
+//                }
+//
+//                System.out.println(" ");
+//
+//            }
             //Comparing all same states for different outputs for conversion to Moore Machine
             // Appending the new state to the system and Increasing the State Count    
             // while appending new states check for any duplicate state by traversing through the pairs array
@@ -264,78 +263,86 @@ public class Main {
                 next_col.add(TNextStates[s]);
                 output_col.add(Toutputs[s]);
             }
-
-            // Code Works properly upto this point
-            // Code for Minimisation using Equivalence Logic
-            //put a loop herefor continuous checking
-            for (s = 0; s < total_len; s++) {
-                // check for redundancy
-                total_len = redundant_transitions(input_col, current_col, next_col, output_col, total_len);
-                //combine inputs
-                total_len = combineinputs(input_col, current_col, next_col, output_col, total_len);
-                //Combine states
-                total_len = combinestates(input_col, current_col, next_col, output_col, total_len, s);
-            }
-
-            //The below code checks for number of final states to count
-            List<String> new_statenames = new ArrayList<String>();
+            //The below code checks for total number of states in the input table 
+            List<String> new_statename = new ArrayList<String>();
+            Map<String, Integer> state_num = new HashMap<String, Integer>();
             k = 0;
-            int new_flag = 0;
+            x = 0;
+            int flag = 0;
             for (s = 0; s < total_len; s++) {
+                String statename = current_col.get(s);
+                x = 0;
                 for (j = 0; j < total_len; j++) {
+                    if (statename.equals(current_col.get(j))) {
+                        x++;
+                    }
 
-                    if (current_col.get(s).contains(next_col.get(j))) {
-                        next_col.set(j, current_col.get(s));
-                        if (new_statenames.isEmpty()) {
-                            new_statenames.add(current_col.get(s));
-                            k++;
-                        } else {
-                            for (i = 0; i < k; i++) {
-                                if (current_col.get(s).equals(new_statenames.get(i))) {
-                                    new_flag = 0;
-                                    break;
-                                } else {
-                                    new_flag = 1;
-                                }
-                            }
-                            if (new_flag == 1) {
-                                new_statenames.add(current_col.get(s));
-                                k++;
-                                new_flag = 0;
+                    if (new_statename.isEmpty()) {
+                        new_statename.add(current_col.get(s));
+                        k++;
+
+                    } else {
+                        for (i = 0; i < k; i++) {
+                            if (current_col.get(s).equals(new_statename.get(i))) {
+                                flag = 0;
+                                break;
+                            } else {
+                                flag = 1;
                             }
                         }
-
+                        if (flag == 1) {
+                            new_statename.add(current_col.get(s));
+                            k++;
+                            flag = 0;
+                        }
                     }
                 }
+                
+                state_num.put(statename, x);
+
             }
-            for (s = 0; s < total_len; s++) {
-                System.out.format("%d ", input_col.get(s));
-                System.out.print(current_col.get(s) + " ");
-                System.out.print(next_col.get(s) + " ");
-                System.out.format("%d\n", output_col.get(s));
+
+            System.out.format("Size = %d \n", new_statename.size());
+            for (s = 0; s < new_statename.size(); s++) {
+                System.out.print("The state is: ");
+                System.out.print(new_statename.get(s));
+                System.out.format("input = %d\n", state_num.get(new_statename.get(s)));
+
             }
+            
+            
+            
+            
+            // Code Works properly upto this point
+            // Code for Minimisation using Equivalence Logic
+
+            //put a loop herefor continuous checking
+//            for (s = 0; s < total_len; s++) {
+//                // check for redundancy
+//                total_len = redundant_transitions(input_col, current_col, next_col, output_col, total_len);
+//                //combine inputs
+//                total_len = combineinputs(input_col, current_col, next_col, output_col, total_len);
+//                //Combine states
+//                total_len = combinestates(input_col, current_col, next_col, output_col, total_len, s);
+//            }
+            //The below code checks for number of final states to count
+//            for (s = 0; s < total_len; s++) {
+//                System.out.format("%d ", input_col.get(s));
+//                System.out.print(current_col.get(s) + " ");
+//                System.out.print(next_col.get(s) + " ");
+//                System.out.format("%d\n", output_col.get(s));
+//            }
             System.out.format("Minimised Transitions = %d \n", total_len);
             System.out.format("Minimised States = %d ", k);
             long endTime = System.currentTimeMillis();
-            
+
             System.out.println("Execution Time is " + (endTime - startTime) + " milliseconds");
             BufferedWriter bw;
             String filename = "Minimised_FSM" + input_file_name + ".blif";
 
             try {
                 bw = new BufferedWriter(new FileWriter(filename));
-                bw.write(".model fsm\n");
-                bw.write(".inputs ");
-                for (s = init_input; s > 0; s--) {
-                    bw.write("I" + s + " ");
-                }
-                bw.write("\n");
-                bw.write(".outputs ");
-                for (s = init_outputs; s > 0; s--) {
-                    bw.write("O" + s + " ");
-                }
-                bw.write("\n");
-                bw.write(".start_kiss\n");
+                               
                 bw.write(".i " + init_input + "\n");
                 bw.write(".o " + init_outputs + "\n");
                 bw.write(".s " + k + "\n");
@@ -347,14 +354,25 @@ public class Main {
                     bw.write(next_col.get(s) + " ");
                     bw.write(changetostring(output_col.get(s), init_outputs) + "\n");
                 }
-                bw.write(".end_kiss\n");
-                bw.write(".end");
                 bw.flush();
                 bw.close();
             } catch (IOException e) {
                 System.out.println("An IOException occured");
             }
-
+            
+            
+            
+            String filename1 = "test_1.blif";
+            blifwriter blif = new blifwriter();
+            blif.writeblif(fsm, filename1);
+            
+            Parser p1 = new Parser();
+            p1.parseFile(filename);
+            ParsedFile fsm1 = p1.getParsedFile();        
+            filename = "test_2.blif";
+            blifwriter blif2 = new blifwriter();
+            blif2.writeblif(fsm1, filename);
+            
             filename = "minimised_FSM.dot";
             try {
                 bw = new BufferedWriter(new FileWriter(filename));
@@ -369,7 +387,7 @@ public class Main {
             } catch (IOException e) {
                 System.out.println("An IOException occured");
             }
-            
+
         } else {
             System.out.println("No input argument given");
         }
@@ -513,7 +531,7 @@ public class Main {
                 if ((input.get(s) == input.get(j)) && (next_state.get(s).equals(next_state.get(j))) && (output.get(s) == output.get(j))) {
                     //Comma was removed from here
                     if (current_state.get(s).equals(current_state.get(j))) {
-                        
+
                     } else {
 
                         current_state.set(s, current_state.get(s) + "," + current_state.get(j));
@@ -589,10 +607,8 @@ public class Main {
         return length;
 
     }
-    
-    //public static int
-    
 
+    //public static int
 }
 
 //                        String[] currentstates;
