@@ -22,6 +22,8 @@ import java.util.Map;
  */
 public class Main {
 
+    public static int x = 0;
+
     public static void main(String[] args) {
 
         if (args.length > 0) {
@@ -38,7 +40,7 @@ public class Main {
             input_file_name = input_file_name.substring(0, input_file_name.indexOf("."));
             // Representation of the FSM
             ParsedFile fsm = p.getParsedFile();
-                                 
+
             // TODO - here you go 
             State[] state_in = fsm.getStates();
 
@@ -54,26 +56,7 @@ public class Main {
 
             }
             System.out.format("I=%d S=%d T=%d O=%d\n", init_input, init_states, init_transitions, init_outputs);
-            //Formatting the given states as a Table below
-//
-//            for (State s : state_in) {
-//                //System.out.print(s.getName()+" ");
-//                List<Long> x = s.getInputs();
-//                int len = x.size();
-//                for (int j = 0; j < len; j++) {
-//                    long input = x.get(j);
-//                    System.out.format("%d ", input);
-//                    System.out.print(s.getName() + " ");
-//                    State intermediate = s.getNextState(input);
-//                    System.out.print(intermediate.getName());
-//                    System.out.print(" ");
-//                    System.out.print(s.output(input));
-//                    System.out.println(" ");
-//                }
-//
-//                System.out.println(" ");
-//
-//            }
+
             //Comparing all same states for different outputs for conversion to Moore Machine
             // Appending the new state to the system and Increasing the State Count    
             // while appending new states check for any duplicate state by traversing through the pairs array
@@ -156,7 +139,7 @@ public class Main {
                 state_counter++;
             }
 
-            int x = 100;  // arbitray value to validate for improper read
+            x = 100;  // arbitray value to validate for improper read
             String sname;
             int loop_var = 0;
 
@@ -265,7 +248,7 @@ public class Main {
             }
             //The below code checks for total number of states in the input table 
             List<String> new_statename = new ArrayList<String>();
-            Map<String, Integer> state_num = new HashMap<String, Integer>();
+            Map<String, Long> state_num = new HashMap<String, Long>();
             k = 0;
             x = 0;
             int flag = 0;
@@ -273,12 +256,10 @@ public class Main {
                 String statename = current_col.get(s);
                 x = 0;
                 for (j = 0; j < total_len; j++) {
-                    if (statename.equals(current_col.get(j))) {
-                        x++;
-                    }
 
                     if (new_statename.isEmpty()) {
                         new_statename.add(current_col.get(s));
+                        state_num.put(statename, output_col.get(s));
                         k++;
 
                     } else {
@@ -292,57 +273,20 @@ public class Main {
                         }
                         if (flag == 1) {
                             new_statename.add(current_col.get(s));
+                            state_num.put(statename, output_col.get(s));
                             k++;
                             flag = 0;
                         }
                     }
                 }
-                
-                state_num.put(statename, x);
-
             }
 
-            System.out.format("Size = %d \n", new_statename.size());
-            for (s = 0; s < new_statename.size(); s++) {
-                System.out.print("The state is: ");
-                System.out.print(new_statename.get(s));
-                System.out.format("input = %d\n", state_num.get(new_statename.get(s)));
-
-            }
-            
-            
-            
-            
-            // Code Works properly upto this point
-            // Code for Minimisation using Equivalence Logic
-
-            //put a loop herefor continuous checking
-//            for (s = 0; s < total_len; s++) {
-//                // check for redundancy
-//                total_len = redundant_transitions(input_col, current_col, next_col, output_col, total_len);
-//                //combine inputs
-//                total_len = combineinputs(input_col, current_col, next_col, output_col, total_len);
-//                //Combine states
-//                total_len = combinestates(input_col, current_col, next_col, output_col, total_len, s);
-//            }
-            //The below code checks for number of final states to count
-//            for (s = 0; s < total_len; s++) {
-//                System.out.format("%d ", input_col.get(s));
-//                System.out.print(current_col.get(s) + " ");
-//                System.out.print(next_col.get(s) + " ");
-//                System.out.format("%d\n", output_col.get(s));
-//            }
-            System.out.format("Minimised Transitions = %d \n", total_len);
-            System.out.format("Minimised States = %d ", k);
-            long endTime = System.currentTimeMillis();
-
-            System.out.println("Execution Time is " + (endTime - startTime) + " milliseconds");
+            // The below Code writes a kiss2 file in the directory whcih represents the Moore Representation of the given state machine
+            String filename = "Moore_" + input_file_name + ".kiss2";
             BufferedWriter bw;
-            String filename = "Minimised_FSM" + input_file_name + ".blif";
-
             try {
                 bw = new BufferedWriter(new FileWriter(filename));
-                               
+
                 bw.write(".i " + init_input + "\n");
                 bw.write(".o " + init_outputs + "\n");
                 bw.write(".s " + k + "\n");
@@ -359,20 +303,157 @@ public class Main {
             } catch (IOException e) {
                 System.out.println("An IOException occured");
             }
-            
-            
-            
+
+            Parser p2 = new Parser();
+            p2.parseFile(filename);
+            ParsedFile fsm2 = p2.getParsedFile();
+
+            // The below code iniialises the states of moore machine with their inputs
+            State[] state_in2 = fsm2.getStates();
+            //Set the initial block partition to 1, implying all the states are in the same block
+            // partition them sequentially based on the outputs
+            for (State s_loop : state_in2) {
+                s_loop.setCode(0);
+            }
+            for (int u = 0; u < fsm2.getNum_states(); u++) {
+                System.out.print("The state is: ");
+                System.out.print(state_in2[u].getName());
+                System.out.format(" %d\n", state_in2[u].getCode());
+            }
+            // Write the inital Block Partition based on inputs
+            x = 0;
+            for (s = 0; s < fsm2.getNum_states(); s++) {
+                String state_n = state_in2[s].getName();
+                long out1 = state_num.get(state_n);
+                if (state_in2[s].getCode() == 0) {
+                    x++;
+                    state_in2[s].setCode(x);
+                    for (j = s + 1; j < fsm2.getNum_states(); j++) {
+                        String state_n1 = state_in2[j].getName();
+                        long out2 = state_num.get(state_n1);
+                        if (out1 == out2 && s != j && (state_in2[j].getCode() == 0)) {
+                            state_in2[j].setCode(x);
+                        } else {
+
+                        }
+                    }
+                } else {
+
+                }
+
+            }
+            for (int u = 0; u < fsm2.getNum_states(); u++) {
+                System.out.print("The state is: ");
+                System.out.print(state_in2[u].getName());
+                System.out.format(" %d\n", state_in2[u].getCode());
+            }
+
+            for (s = 0; s < fsm2.getNum_states(); s++) {
+
+                state_in2 = partition_state(state_in2, fsm2);
+                for (int u = 0; u < fsm2.getNum_states(); u++) {
+                    System.out.print("The state is: ");
+                    System.out.print(state_in2[u].getName());
+                    System.out.format(" %d\n", state_in2[u].getCode());
+                }
+            }
+
+//            int write_flag = 0;
+//            for (s = 0; s < fsm2.getNum_states(); s++) {
+//                for (j = s + 1; j < fsm2.getNum_states(); j++) {
+//                    String state_n1 = state_in2[s].getName();
+//                    String state_n2 = state_in2[j].getName();
+//                    if (state_in2[s].getCode() == state_in2[j].getCode()) {
+//                        List<Long> input1 = state_in2[s].getInputs();
+//                        List<Long> input2 = state_in2[j].getInputs();
+//                        for (int in1 = 0; in1 < input1.size(); in1++) {
+//                            for (int in2 = 0; in2 < input2.size(); in2++) {
+//                                if (input1.get(in1) == input2.get(in2)) {
+//                                    if (state_in2[s].getNextState(input1.get(in1)).getCode() == state_in2[j].getNextState(input2.get(in2)).getCode()) {
+//                                        continue;
+//                                    } else {
+//                                        write_flag = 1;
+//                                    }
+//                                }
+//                                if (x == fsm2.getNum_states() || (write_flag == 1)) {
+//                                    break;
+//                                }
+//                            }
+//                            if (x == fsm2.getNum_states() || (write_flag == 1)) {
+//                                break;
+//                            }
+//                        }
+//                        
+//                    }
+//                    if (write_flag == 1) {
+//                            x++;
+//                            state_in2[j].setCode(x);
+//                            
+//                            write_flag = 0;
+//
+//                        }
+//
+//                    if (x == fsm2.getNum_states()) {
+//                        break;
+//                    }
+//
+//                }
+//                for (int u = 0; u < fsm2.getNum_states(); u++) {
+//                    System.out.print("The state is: ");
+//                    System.out.print(state_in2[u].getName());
+//                    System.out.format(" %d\n", state_in2[u].getCode());
+//                }
+//                if (x == fsm2.getNum_states()) {
+//                    break;
+//                }
+//
+//            }
+            for (s = 0; s < fsm2.getNum_states(); s++) {
+                System.out.print("The state is: ");
+                System.out.print(state_in2[s].getName());
+                System.out.format("Partition Block = %d\n", state_in2[s].getCode());
+            }
+            // Code Works properly upto this point
+            // Code for Minimisation using Equivalence Logic
+            System.out.format("Minimised Transitions = %d \n", total_len);
+            System.out.format("Minimised States = %d ", k);
+            long endTime = System.currentTimeMillis();
+
+            System.out.println("Execution Time is " + (endTime - startTime) + " milliseconds");
+
+            filename = "Minimise1_FSM" + input_file_name + ".kiss2";
+
+            try {
+                bw = new BufferedWriter(new FileWriter(filename));
+
+                bw.write(".i " + init_input + "\n");
+                bw.write(".o " + init_outputs + "\n");
+                bw.write(".s " + k + "\n");
+                bw.write(".p " + total_len + "\n");
+
+                for (s = 0; s < total_len; s++) {
+                    bw.write(changetostring(input_col.get(s), init_input) + " ");
+                    bw.write(current_col.get(s) + " ");
+                    bw.write(next_col.get(s) + " ");
+                    bw.write(changetostring(output_col.get(s), init_outputs) + "\n");
+                }
+                bw.flush();
+                bw.close();
+            } catch (IOException e) {
+                System.out.println("An IOException occured");
+            }
+
             String filename1 = "test_1.blif";
             blifwriter blif = new blifwriter();
             blif.writeblif(fsm, filename1);
-            
+
             Parser p1 = new Parser();
             p1.parseFile(filename);
-            ParsedFile fsm1 = p1.getParsedFile();        
+            ParsedFile fsm1 = p1.getParsedFile();
             filename = "test_2.blif";
             blifwriter blif2 = new blifwriter();
             blif2.writeblif(fsm1, filename);
-            
+
             filename = "minimised_FSM.dot";
             try {
                 bw = new BufferedWriter(new FileWriter(filename));
@@ -608,6 +689,69 @@ public class Main {
 
     }
 
+    public static State[] partition_state(State[] state_in2, ParsedFile fsm2) {
+        int count=0, compare=0;
+        int write_flag = 0;
+        for (int s = 0; s < fsm2.getNum_states(); s++) {
+
+            for (int j = 0; j < fsm2.getNum_states(); j++) {
+                write_flag = 0;
+                count=0;
+                compare=0;
+                String state_n1 = state_in2[s].getName();
+                String state_n2 = state_in2[j].getName();
+                if (s != j) {
+                    List<Long> input1 = state_in2[s].getInputs();
+                    List<Long> input2 = state_in2[j].getInputs();
+                    for (int in1 = 0; in1 < input1.size(); in1++) 
+                        for (int in2 = 0; in2 < input2.size(); in2++) 
+                            if (input1.get(in1) == input2.get(in2)) {
+                            count++;
+                                    
+                            }
+                    for (int in1 = 0; in1 < input1.size(); in1++) {
+                        for (int in2 = 0; in2 < input2.size(); in2++) {
+                            if (input1.get(in1) == input2.get(in2)) {
+                                if (state_in2[s].getNextState(input1.get(in1)).getCode() == state_in2[j].getNextState(input2.get(in2)).getCode()) {
+                                    compare++;
+                                    if(count==compare && (state_in2[s].output(input1.get(in1))==state_in2[j].output(input2.get(in2))) )
+                                    {
+                                        state_in2[j].setCode(state_in2[s].getCode());
+                                    }
+                                    continue;
+                                } else {
+                                    write_flag = 1;
+                                }
+                            }
+                            if (x == fsm2.getNum_states() || (write_flag == 1)) {
+                                break;
+                            }
+                        }
+                        if (x == fsm2.getNum_states() || (write_flag == 1)) {
+                            break;
+                        }
+                    }
+
+                }
+                if (write_flag == 1 && (state_in2[s].getCode() == state_in2[j].getCode())) {
+                    x++;
+                    state_in2[j].setCode(x);
+
+                    write_flag = 0;
+                    return state_in2;
+                }
+
+                if (x == fsm2.getNum_states()) {
+                    return state_in2;
+                }
+
+            }
+
+        }
+
+        return state_in2;
+    }
+
     //public static int
 }
 
@@ -732,3 +876,39 @@ public class Main {
 //            out_write_help.writeDot(fsm, output_filename);
 //            System.out.println("Output Written");
 //            System.out.println("Completed");
+//put a loop herefor continuous checking
+//            for (s = 0; s < total_len; s++) {
+//                // check for redundancy
+//                total_len = redundant_transitions(input_col, current_col, next_col, output_col, total_len);
+//                //combine inputs
+//                total_len = combineinputs(input_col, current_col, next_col, output_col, total_len);
+//                //Combine states
+//                total_len = combinestates(input_col, current_col, next_col, output_col, total_len, s);
+//            }
+//The below code checks for number of final states to count
+//            for (s = 0; s < total_len; s++) {
+//                System.out.format("%d ", input_col.get(s));
+//                System.out.print(current_col.get(s) + " ");
+//                System.out.print(next_col.get(s) + " ");
+//                System.out.format("%d\n", output_col.get(s));
+//            }
+//Formatting the given states as a Table below
+//
+//            for (State s : state_in) {
+//                //System.out.print(s.getName()+" ");
+//                List<Long> x = s.getInputs();
+//                int len = x.size();
+//                for (int j = 0; j < len; j++) {
+//                    long input = x.get(j);
+//                    System.out.format("%d ", input);
+//                    System.out.print(s.getName() + " ");
+//                    State intermediate = s.getNextState(input);
+//                    System.out.print(intermediate.getName());
+//                    System.out.print(" ");
+//                    System.out.print(s.output(input));
+//                    System.out.println(" ");
+//                }
+//
+//                System.out.println(" ");
+//
+//            }

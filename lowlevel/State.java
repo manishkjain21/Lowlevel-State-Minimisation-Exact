@@ -12,7 +12,7 @@ public class State {
 	private Map<Long, Long> outputMap = new HashMap<Long, Long>();
 	private Map<State, Integer> transitionCount = new HashMap<State, Integer>();
 	private List<Long> inputs = new ArrayList<Long>();
-	
+                
 	private long code=-1;
 	
 	private int total_transitions = 0;
@@ -72,6 +72,10 @@ public class State {
 	
 	public State getNextState(long input){
 		return nextStateMap.get(input);
+	}
+        
+        public long get_block(){
+		return code;
 	}
 	
 	public long output(long input){

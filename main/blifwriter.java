@@ -21,12 +21,10 @@ public class blifwriter {
     public void writeblif(ParsedFile fsm, String filename) {
 
         fsm_mini = fsm;
-
         name = filename.substring(filename.lastIndexOf(File.separatorChar) + 1, filename.lastIndexOf('.'));
         try {
             System.out.println(filename);
             bw = new BufferedWriter(new FileWriter(filename));
-
             writeHeader();
             writecomments();
             writetransitionsection();
@@ -103,9 +101,7 @@ public class blifwriter {
             State[] states = fsm_mini.getStates();
 
             for (State s : states) {
-
                 String next_state = states_name.get(i);
-
                 List<Long> input_data = s.getInputs();
                 int len = input_data.size();
                 for (int j = 0; j < len; j++) {
