@@ -250,11 +250,11 @@ public class Main {
             List<String> new_statename = new ArrayList<String>();
             Map<String, Long> state_num = new HashMap<String, Long>();
             k = 0;
-            x = 0;
+            
             int flag = 0;
             for (s = 0; s < total_len; s++) {
                 String statename = current_col.get(s);
-                x = 0;
+                
                 for (j = 0; j < total_len; j++) {
 
                     if (new_statename.isEmpty()) {
@@ -264,7 +264,7 @@ public class Main {
 
                     } else {
                         for (i = 0; i < k; i++) {
-                            if (current_col.get(s).equals(new_statename.get(i))) {
+                            if (statename.equals(new_statename.get(i))) {
                                 flag = 0;
                                 break;
                             } else {
@@ -280,7 +280,35 @@ public class Main {
                     }
                 }
             }
+            for (s = 0; s < total_len; s++) {
+                String statename = next_col.get(s);
+                
+                for (j = 0; j < total_len; j++) {
 
+                    if (new_statename.isEmpty()) {
+                        new_statename.add(statename);
+                        state_num.put(statename, output_col.get(s));
+                        k++;
+
+                    } else {
+                        for (i = 0; i < k; i++) {
+                            if (statename.equals(new_statename.get(i))) {
+                                flag = 0;
+                                break;
+                            } else {
+                                flag = 1;
+                            }
+                        }
+                        if (flag == 1) {
+                            new_statename.add(statename);
+                            state_num.put(statename, output_col.get(s));
+                            k++;
+                            flag = 0;
+                        }
+                    }
+                }
+            }
+            System.out.format("%d\n", k);
             // The below Code writes a kiss2 file in the directory whcih represents the Moore Representation of the given state machine
             String filename = "Moore_" + input_file_name + ".kiss2";
             BufferedWriter bw;
@@ -289,7 +317,7 @@ public class Main {
 
                 bw.write(".i " + init_input + "\n");
                 bw.write(".o " + init_outputs + "\n");
-                bw.write(".s " + k + "\n");
+                bw.write(".s " + x + "\n");
                 bw.write(".p " + total_len + "\n");
 
                 for (s = 0; s < total_len; s++) {
@@ -303,28 +331,33 @@ public class Main {
             } catch (IOException e) {
                 System.out.println("An IOException occured");
             }
-
+            
             Parser p2 = new Parser();
             p2.parseFile(filename);
             ParsedFile fsm2 = p2.getParsedFile();
-
+            
+            
             // The below code iniialises the states of moore machine with their inputs
             State[] state_in2 = fsm2.getStates();
             //Set the initial block partition to 1, implying all the states are in the same block
             // partition them sequentially based on the outputs
-            for (State s_loop : state_in2) {
-                s_loop.setCode(0);
+                     
+            for (s=0; s< fsm2.getNum_states(); s++) {
+                state_in2[s].setCode(0);
             }
+            
 //            for (int u = 0; u < fsm2.getNum_states(); u++) {
 //                System.out.print("The state is: ");
 //                System.out.print(state_in2[u].getName());
 //                System.out.format(" %d\n", state_in2[u].getCode());
 //            }
+            
             // Write the inital Block Partition based on inputs
             x = 0;
             for (s = 0; s < fsm2.getNum_states(); s++) {
                 String state_n = state_in2[s].getName();
                 long out1 = state_num.get(state_n);
+                
                 if (state_in2[s].getCode() == 0) {
                     x++;
                     state_in2[s].setCode(x);
@@ -342,6 +375,8 @@ public class Main {
                 }
 
             }
+            
+            System.out.format("%d \n", fsm2.getNum_states());
 //            for (int u = 0; u < fsm2.getNum_states(); u++) {
 //                System.out.print("The state is: ");
 //                System.out.print(state_in2[u].getName());
@@ -361,14 +396,19 @@ public class Main {
 
             //Based on the partition formed, change the current state name to that of state which can be combined together
             init_states = fsm2.getNum_states();
+            int max = (int)state_in2[0].getCode();
             for (s = 0; s < fsm2.getNum_states(); s++) {
+                
+                if(max < state_in2[s].getCode())
+                    max =(int) state_in2[s].getCode();
                 for (j = s + 1; j < fsm2.getNum_states(); j++) {
                     if (state_in2[s].getCode() == state_in2[j].getCode()) {
                         state_in2[j].changestate(state_in2[s].getName());
-                        init_states--;
                     }
+                    
                 }
             }
+            init_states = max;
             // Code Works properly upto this point
             List<Long> Tinput_col = new ArrayList<Long>();
             List<String> Tcurrent_col = new ArrayList<String>();
