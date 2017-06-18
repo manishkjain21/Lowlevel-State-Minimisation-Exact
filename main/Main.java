@@ -347,76 +347,58 @@ public class Main {
                 System.out.print(state_in2[u].getName());
                 System.out.format(" %d\n", state_in2[u].getCode());
             }
-
+            // Code for Minimisation using Equivalence Logic
+            // The below code does partitioning and sets  the desired partition in code variable
             for (s = 0; s < fsm2.getNum_states(); s++) {
 
                 state_in2 = partition_state(state_in2, fsm2);
-                for (int u = 0; u < fsm2.getNum_states(); u++) {
-                    System.out.print("The state is: ");
-                    System.out.print(state_in2[u].getName());
-                    System.out.format(" %d\n", state_in2[u].getCode());
-                }
-            }
-
-//            int write_flag = 0;
-//            for (s = 0; s < fsm2.getNum_states(); s++) {
-//                for (j = s + 1; j < fsm2.getNum_states(); j++) {
-//                    String state_n1 = state_in2[s].getName();
-//                    String state_n2 = state_in2[j].getName();
-//                    if (state_in2[s].getCode() == state_in2[j].getCode()) {
-//                        List<Long> input1 = state_in2[s].getInputs();
-//                        List<Long> input2 = state_in2[j].getInputs();
-//                        for (int in1 = 0; in1 < input1.size(); in1++) {
-//                            for (int in2 = 0; in2 < input2.size(); in2++) {
-//                                if (input1.get(in1) == input2.get(in2)) {
-//                                    if (state_in2[s].getNextState(input1.get(in1)).getCode() == state_in2[j].getNextState(input2.get(in2)).getCode()) {
-//                                        continue;
-//                                    } else {
-//                                        write_flag = 1;
-//                                    }
-//                                }
-//                                if (x == fsm2.getNum_states() || (write_flag == 1)) {
-//                                    break;
-//                                }
-//                            }
-//                            if (x == fsm2.getNum_states() || (write_flag == 1)) {
-//                                break;
-//                            }
-//                        }
-//                        
-//                    }
-//                    if (write_flag == 1) {
-//                            x++;
-//                            state_in2[j].setCode(x);
-//                            
-//                            write_flag = 0;
-//
-//                        }
-//
-//                    if (x == fsm2.getNum_states()) {
-//                        break;
-//                    }
-//
-//                }
 //                for (int u = 0; u < fsm2.getNum_states(); u++) {
 //                    System.out.print("The state is: ");
 //                    System.out.print(state_in2[u].getName());
 //                    System.out.format(" %d\n", state_in2[u].getCode());
 //                }
-//                if (x == fsm2.getNum_states()) {
-//                    break;
-//                }
-//
-//            }
+            }
+            
+            
+            //Based on the partition formed, change the current state name to that of state which can be combined together
+            init_states = fsm2.getNum_states();
+            for (s = 0; s < fsm2.getNum_states(); s++) {
+                for (j = s + 1; j < fsm2.getNum_states(); j++) {
+                    if (state_in2[s].getCode() == state_in2[j].getCode()) {
+                        state_in2[j].changestate(state_in2[s].getName());
+                        init_states--;
+                    }
+                }
+            }
+            // Code Works properly upto this point
+            List<Long> Tinput_col = new ArrayList<Long>();
+            List<String> Tcurrent_col = new ArrayList<String>();
+            List<String> Tnext_col = new ArrayList<String>();
+            List<Long> Toutput_col = new ArrayList<Long>();
+            total_writes=0;
+            for (State st2 : state_in2) {
+                List<Long> x = st2.getInputs();
+                int len = x.size();
+                for (j = 0; j < len; j++) {
+                    Tcurrent_col.add(st2.getName());
+                    Tinput_col.add(x.get(j));
+                    Tnext_col.add(st2.getNextState(x.get(j)).getName());
+                    Toutput_col.add(st2.output(x.get(j)));
+                    total_writes++;
+                }
+            }
+            
+            total_len = redundant_transitions(input_col, Tcurrent_col, Tnext_col, Toutput_col, total_writes);
+            
+            //Print the final states
             for (s = 0; s < fsm2.getNum_states(); s++) {
                 System.out.print("The state is: ");
                 System.out.print(state_in2[s].getName());
                 System.out.format("Partition Block = %d\n", state_in2[s].getCode());
             }
-            // Code Works properly upto this point
-            // Code for Minimisation using Equivalence Logic
+
             System.out.format("Minimised Transitions = %d \n", total_len);
-            System.out.format("Minimised States = %d ", k);
+            System.out.format("Minimised States = %d ", init_states);
             long endTime = System.currentTimeMillis();
 
             System.out.println("Execution Time is " + (endTime - startTime) + " milliseconds");
@@ -428,14 +410,14 @@ public class Main {
 
                 bw.write(".i " + init_input + "\n");
                 bw.write(".o " + init_outputs + "\n");
-                bw.write(".s " + k + "\n");
+                bw.write(".s " + init_states + "\n");
                 bw.write(".p " + total_len + "\n");
 
                 for (s = 0; s < total_len; s++) {
-                    bw.write(changetostring(input_col.get(s), init_input) + " ");
-                    bw.write(current_col.get(s) + " ");
-                    bw.write(next_col.get(s) + " ");
-                    bw.write(changetostring(output_col.get(s), init_outputs) + "\n");
+                    bw.write(changetostring(Tinput_col.get(s), init_input) + " ");
+                    bw.write(Tcurrent_col.get(s) + " ");
+                    bw.write(Tnext_col.get(s) + " ");
+                    bw.write(changetostring(Toutput_col.get(s), init_outputs) + "\n");
                 }
                 bw.flush();
                 bw.close();
@@ -459,7 +441,7 @@ public class Main {
                 bw = new BufferedWriter(new FileWriter(filename));
                 bw.write("digraph " + "Minimised_FSM" + " {\n");
                 for (s = 0; s < total_len; s++) {
-                    bw.write("\t " + current_col.get(s) + " -> " + next_col.get(s) + "[label=\"" + changetostring(input_col.get(s), init_input) + "\"" + ",weight=\"" + changetostring(input_col.get(s), init_input) + "\"];\n");
+                    bw.write("\t " + Tcurrent_col.get(s) + " -> " + Tnext_col.get(s) + "[label=\"" + changetostring(Tinput_col.get(s), init_input) + "\"" + ",weight=\"" + changetostring(Tinput_col.get(s), init_input) + "\"];\n");
 
                 }
                 bw.write("}");
@@ -690,32 +672,33 @@ public class Main {
     }
 
     public static State[] partition_state(State[] state_in2, ParsedFile fsm2) {
-        int count=0, compare=0;
+        int count = 0, compare = 0;
         int write_flag = 0;
         for (int s = 0; s < fsm2.getNum_states(); s++) {
 
             for (int j = 0; j < fsm2.getNum_states(); j++) {
                 write_flag = 0;
-                count=0;
-                compare=0;
+                count = 0;
+                compare = 0;
                 String state_n1 = state_in2[s].getName();
                 String state_n2 = state_in2[j].getName();
                 if (s != j) {
                     List<Long> input1 = state_in2[s].getInputs();
                     List<Long> input2 = state_in2[j].getInputs();
-                    for (int in1 = 0; in1 < input1.size(); in1++) 
-                        for (int in2 = 0; in2 < input2.size(); in2++) 
+                    for (int in1 = 0; in1 < input1.size(); in1++) {
+                        for (int in2 = 0; in2 < input2.size(); in2++) {
                             if (input1.get(in1) == input2.get(in2)) {
-                            count++;
-                                    
+                                count++;
+
                             }
+                        }
+                    }
                     for (int in1 = 0; in1 < input1.size(); in1++) {
                         for (int in2 = 0; in2 < input2.size(); in2++) {
                             if (input1.get(in1) == input2.get(in2)) {
                                 if (state_in2[s].getNextState(input1.get(in1)).getCode() == state_in2[j].getNextState(input2.get(in2)).getCode()) {
                                     compare++;
-                                    if(count==compare && (state_in2[s].output(input1.get(in1))==state_in2[j].output(input2.get(in2))) )
-                                    {
+                                    if (count == compare && (state_in2[s].output(input1.get(in1)) == state_in2[j].output(input2.get(in2)))) {
                                         state_in2[j].setCode(state_in2[s].getCode());
                                     }
                                     continue;
@@ -910,5 +893,55 @@ public class Main {
 //                }
 //
 //                System.out.println(" ");
+//
+//            }
+//            int write_flag = 0;
+//            for (s = 0; s < fsm2.getNum_states(); s++) {
+//                for (j = s + 1; j < fsm2.getNum_states(); j++) {
+//                    String state_n1 = state_in2[s].getName();
+//                    String state_n2 = state_in2[j].getName();
+//                    if (state_in2[s].getCode() == state_in2[j].getCode()) {
+//                        List<Long> input1 = state_in2[s].getInputs();
+//                        List<Long> input2 = state_in2[j].getInputs();
+//                        for (int in1 = 0; in1 < input1.size(); in1++) {
+//                            for (int in2 = 0; in2 < input2.size(); in2++) {
+//                                if (input1.get(in1) == input2.get(in2)) {
+//                                    if (state_in2[s].getNextState(input1.get(in1)).getCode() == state_in2[j].getNextState(input2.get(in2)).getCode()) {
+//                                        continue;
+//                                    } else {
+//                                        write_flag = 1;
+//                                    }
+//                                }
+//                                if (x == fsm2.getNum_states() || (write_flag == 1)) {
+//                                    break;
+//                                }
+//                            }
+//                            if (x == fsm2.getNum_states() || (write_flag == 1)) {
+//                                break;
+//                            }
+//                        }
+//                        
+//                    }
+//                    if (write_flag == 1) {
+//                            x++;
+//                            state_in2[j].setCode(x);
+//                            
+//                            write_flag = 0;
+//
+//                        }
+//
+//                    if (x == fsm2.getNum_states()) {
+//                        break;
+//                    }
+//
+//                }
+//                for (int u = 0; u < fsm2.getNum_states(); u++) {
+//                    System.out.print("The state is: ");
+//                    System.out.print(state_in2[u].getName());
+//                    System.out.format(" %d\n", state_in2[u].getCode());
+//                }
+//                if (x == fsm2.getNum_states()) {
+//                    break;
+//                }
 //
 //            }
