@@ -315,11 +315,11 @@ public class Main {
             for (State s_loop : state_in2) {
                 s_loop.setCode(0);
             }
-            for (int u = 0; u < fsm2.getNum_states(); u++) {
-                System.out.print("The state is: ");
-                System.out.print(state_in2[u].getName());
-                System.out.format(" %d\n", state_in2[u].getCode());
-            }
+//            for (int u = 0; u < fsm2.getNum_states(); u++) {
+//                System.out.print("The state is: ");
+//                System.out.print(state_in2[u].getName());
+//                System.out.format(" %d\n", state_in2[u].getCode());
+//            }
             // Write the inital Block Partition based on inputs
             x = 0;
             for (s = 0; s < fsm2.getNum_states(); s++) {
@@ -342,11 +342,11 @@ public class Main {
                 }
 
             }
-            for (int u = 0; u < fsm2.getNum_states(); u++) {
-                System.out.print("The state is: ");
-                System.out.print(state_in2[u].getName());
-                System.out.format(" %d\n", state_in2[u].getCode());
-            }
+//            for (int u = 0; u < fsm2.getNum_states(); u++) {
+//                System.out.print("The state is: ");
+//                System.out.print(state_in2[u].getName());
+//                System.out.format(" %d\n", state_in2[u].getCode());
+//            }
             // Code for Minimisation using Equivalence Logic
             // The below code does partitioning and sets  the desired partition in code variable
             for (s = 0; s < fsm2.getNum_states(); s++) {
@@ -358,8 +358,7 @@ public class Main {
 //                    System.out.format(" %d\n", state_in2[u].getCode());
 //                }
             }
-            
-            
+
             //Based on the partition formed, change the current state name to that of state which can be combined together
             init_states = fsm2.getNum_states();
             for (s = 0; s < fsm2.getNum_states(); s++) {
@@ -375,7 +374,7 @@ public class Main {
             List<String> Tcurrent_col = new ArrayList<String>();
             List<String> Tnext_col = new ArrayList<String>();
             List<Long> Toutput_col = new ArrayList<Long>();
-            total_writes=0;
+            total_writes = 0;
             for (State st2 : state_in2) {
                 List<Long> x = st2.getInputs();
                 int len = x.size();
@@ -387,16 +386,15 @@ public class Main {
                     total_writes++;
                 }
             }
-            
-            total_len = redundant_transitions(input_col, Tcurrent_col, Tnext_col, Toutput_col, total_writes);
-            
-            //Print the final states
-            for (s = 0; s < fsm2.getNum_states(); s++) {
-                System.out.print("The state is: ");
-                System.out.print(state_in2[s].getName());
-                System.out.format("Partition Block = %d\n", state_in2[s].getCode());
-            }
 
+            total_len = redundant_transitions(input_col, Tcurrent_col, Tnext_col, Toutput_col, total_writes);
+
+            //Print the final states
+//            for (s = 0; s < fsm2.getNum_states(); s++) {
+//                System.out.print("The state is: ");
+//                System.out.print(state_in2[s].getName());
+//                System.out.format("Partition Block = %d\n", state_in2[s].getCode());
+//            }
             System.out.format("Minimised Transitions = %d \n", total_len);
             System.out.format("Minimised States = %d ", init_states);
             long endTime = System.currentTimeMillis();
