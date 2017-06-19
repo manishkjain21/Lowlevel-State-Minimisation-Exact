@@ -68,8 +68,11 @@ public class blifwriter {
         int i = 0;
         for (State s : states) {
             state_map.put(s.getName(), longtostr((1 << i), fsm_mini.getNum_states()));
+            //Uncomment Below Line for Binary Encoding
+            //state_map.put(s.getName(), binarystr(i, Integer.toBinaryString(fsm_mini.getNum_states() - 1).length()));   // Binary Encoding
             states_name.add(s.getName());
             bw.write("# " + s.getName() + " " + longtostr((1 << i), fsm_mini.getNum_states()) + lineSeparator);
+            //bw.write("# " + s.getName() + " " + binarystr(i, Integer.toBinaryString(fsm_mini.getNum_states() - 1).length())+ lineSeparator);  // Binary Encoding
             i++;
         }
 
@@ -84,10 +87,13 @@ public class blifwriter {
         /*write .inputs*/
         //{
         for (int i = fsm_mini.getNum_states() - 1; i >= 0; i--) {
-
+        //Uncomment Below Line for Binary Encoding
+        //for (int i = Integer.toBinaryString(fsm_mini.getNum_states() - 1).length()-1; i >= 0; i--) {        
             bw.write(lineSeparator);
             bw.write(".names");
             for (int j = fsm_mini.getNum_states() - 1; j >= 0; j--) {
+            //Uncomment Below Line for Binary Encoding
+            //for (int j = Integer.toBinaryString(fsm_mini.getNum_states() - 1).length()-1; j >= 0; j--) {    
                 bw.write(" S" + Integer.toString(j));
             }
 
@@ -107,7 +113,7 @@ public class blifwriter {
                 for (int j = 0; j < len; j++) {
 
                     if (next_state.equals(s.getNextState(input_data.get(j)).getName())) {
-                        // wirite code for string to long
+                        // write code for string to long
                         String stringname = state_map.get(s.getName());
                         bw.write(stringname + changetostring(input_data.get(j), fsm_mini.getNumInputs()) + " 1" + lineSeparator);
                     }
@@ -121,6 +127,8 @@ public class blifwriter {
         bw.write(lineSeparator);
 
         for (int i = fsm_mini.getNum_states() - 1; i >= 0; i--) {
+        //Uncomment Below Line for Binary Encoding
+        //for (int i = Integer.toBinaryString(fsm_mini.getNum_states() - 1).length()-1; i >= 0; i--) {    
             bw.write(".latch next_S" + Integer.toString(i) + " S" + Integer.toString(i) + " re clk 0" + lineSeparator);
         }
 
@@ -135,7 +143,9 @@ public class blifwriter {
         for (int i = fsm_mini.getNumOutputs() - 1; i >= 0; i--) {
             bw.write(lineSeparator);
             bw.write(".names");
-            for (int j = fsm_mini.getNum_states() - 1; j >= 0; j--) {
+            for (int j = fsm_mini.getNum_states() - 1; j >= 0; j--) {                                     // for one-hot encoding
+            //Uncomment Below Line for Binary Encoding
+            //for (int j = Integer.toBinaryString(fsm_mini.getNum_states() - 1).length()-1; j >= 0; j--) {  // for binary encoding
                 bw.write(" S" + Integer.toString(j));
             }
 
@@ -189,7 +199,19 @@ public class blifwriter {
 
         return str;
     }
-
+    
+    public static String binarystr(int input, int len) {
+        String str="";
+        
+        if(len > Integer.toBinaryString(input).length()){
+            for (int a = 0; a < (len - Integer.toBinaryString(input).length()); a++)
+                str = str.concat("0");
+        }
+        str = str.concat(Integer.toBinaryString(input));
+    
+        return str;
+    }
+    
     public static String changetostring(long x, int r) {
         long temp_res;
         String m = "";
