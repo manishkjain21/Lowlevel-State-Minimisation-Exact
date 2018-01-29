@@ -31,6 +31,8 @@ public class Main {
 
             System.out.println(" Current working directory : " + System.getProperty("user.dir"));
 
+	    System.out.println("LLS Project");
+
             String input_file_name = args[0];
 
             Parser p = new Parser();
